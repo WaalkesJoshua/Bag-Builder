@@ -10,15 +10,16 @@ function App() {
 
   const dispatch = useDispatch();
 
-  const discSpeed = 9;
 
   useEffect(() => {
-    fetchDiscs(dispatch, discSpeed);
+    fetchDiscs(dispatch);
   }, [dispatch]);
 
   return (
     <div className="App">
-      <span> Hello </span>
+      <span> Hello
+        {console.log("HEllo")}
+      </span>
     </div>
   );
 }

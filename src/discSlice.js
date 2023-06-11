@@ -32,12 +32,13 @@ export const {
   addDiscToBag
 } = discSlice.actions;
 
-export function fetchDiscs(dispatch, discSpeed) {
+export function fetchDiscs(dispatch) {
   // return async (dispatch) => {
-    axios.get(`http://localhost:8080/allDiscs/${discSpeed}`)
+    axios.get(`http://localhost:3030/discs`)
       .then((resp) => {
-        let discs = resp.data;
-        dispatch(getDiscs({ discs }))
+        // let discs = resp.data;
+        // dispatch(getDiscs({ discs }))
+        console.log(resp.data);
       })
   // }
 };
