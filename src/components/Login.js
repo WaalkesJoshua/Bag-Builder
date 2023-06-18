@@ -15,6 +15,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useSignIn } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setCurrentUser } from '../slicers/userSlice';
 
 
 function Copyright(props) {
@@ -35,6 +37,7 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function Login() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const signIn = useSignIn();
   const [formData, setFormData] = React.useState({ email: '', password: '' });
@@ -45,18 +48,21 @@ export default function Login() {
   const handleSubmit = async (event) => {
     // console.log({formData});
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}${PORT}/login`,formData);
+    const response = await axios.post(`${BASE_URL}${PORT}/auth/login`, formData);
     if (response.status === 201) {
       console.log(response.data);
-      if(signIn(
+      if (signIn(
         {
           tokentoken: response.data.token,
-          expiresIn:response.data.expiresIn,
+          expiresIn: response.data.expiresIn,
           tokenType: "Bearer",
           authState: response.data.authUserState
         }
       )) {
-            navigate('/user');
+        const user = response.data.authUserState;
+        console.log(user);
+        dispatch(setCurrentUser({user}));
+        navigate('/user');
       }
     }
   };
@@ -121,17 +127,17 @@ export default function Login() {
               Sign In
             </Button>
           </Box>
-            {/* <Grid container>
+          {/* <Grid container>
               {/* <Grid item xs>
                 <Link href="#" variant="body2">
                   Forgot password?
                 </Link>
               </Grid>
               <Grid item> */}
-                <Link href="/signup" variant="body2">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              {/* </Grid>
+          <Link href="/signup" variant="body2">
+            {"Don't have an account? Sign Up"}
+          </Link>
+          {/* </Grid>
             </Grid> */}
         </Box>
         <Copyright sx={{ mt: 8, mb: 4 }} />

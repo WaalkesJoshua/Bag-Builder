@@ -45,7 +45,7 @@ export default function SignUp() {
   const handleSubmit = async (event) => {
     // console.log({formData});
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}${PORT}/signup`, formData);
+    const response = await axios.post(`${BASE_URL}${PORT}/auth/signup`, formData);
     if (response.status === 201) {
       console.log(response.data);
       if (signIn(

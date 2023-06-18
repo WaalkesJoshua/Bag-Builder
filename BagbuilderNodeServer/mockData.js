@@ -316,8 +316,9 @@ function mockData () {
     "email": user.email,
     "username": user.username,
     "password": user.password,
-    "birthDate": user.birthDate})
-  })
+    "birthDate": user.birthDate,
+    "bags": []})
+  });
 
   return minUsers;
 }
