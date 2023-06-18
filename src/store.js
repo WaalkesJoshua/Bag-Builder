@@ -1,6 +1,6 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
-import { discSlice } from './discSlice';
+import { discSlice } from './slicers/discSlice';
 
 const rootReducer = combineReducers({
   discs: discSlice.reducer

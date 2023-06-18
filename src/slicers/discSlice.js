@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+const baseUrl = process.env.DEV_URL || 'http://localhost:';
+const port = process.env.NODE_PORT || 4040;
 
 const initialState = {
   discs: [],
@@ -32,15 +34,15 @@ export const {
   addDiscToBag
 } = discSlice.actions;
 
-export function fetchDiscs(dispatch) {
-  // return async (dispatch) => {
-    axios.get(`http://localhost:3030/discs`)
-      .then((resp) => {
-        // let discs = resp.data;
-        // dispatch(getDiscs({ discs }))
-        console.log(resp.data);
-      })
-  // }
+
+export async function fetchDiscs(dispatch) {
+  try{
+    const response = await axios.get(`${baseUrl + port}/discs`);
+    const discs = response.data;
+    dispatch(getDiscs({ discs }));
+  } catch (error) {
+    console.log('Fetch Discs error :' + error);
+  }
 };
 
 export function updateUserBag(dispatch, disc) {
