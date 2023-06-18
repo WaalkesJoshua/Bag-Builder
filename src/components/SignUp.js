@@ -15,6 +15,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useSignIn } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
+import { emailValidator, passwordValidator } from '../util/validators';
 
 
 function Copyright(props) {
@@ -38,6 +39,8 @@ export default function SignUp() {
   const navigate = useNavigate();
   const signIn = useSignIn();
   const [formData, setFormData] = React.useState({ email: '', password: '' });
+  const [validInputs, setValidInputs] = React.useState(false);
+  const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
   const BASE_URL = process.env.REACT_APP_DEV_URL;
   const PORT = process.env.REACT_APP_NODE_PORT;
 
@@ -65,8 +68,21 @@ export default function SignUp() {
   };
 
   const handleChange = (event) => {
-    setFormData({ ...formData, [event.target.name]: event.target.value })
-  }
+    const { name, value } = event.target;
+    if (name === 'email') {
+      setValidFields({...validFields, validEmail: emailValidator(value)})
+    }
+    if (name === 'password') {
+      setValidFields({...validFields, validPassword: passwordValidator(value)})
+    }
+    setFormData({ ...formData, [name]: value })
+    const { email, password } = formData;
+    if (emailValidator(email) && passwordValidator(password)) {
+      setValidInputs(true);
+    } else {
+      setValidInputs(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -99,6 +115,10 @@ export default function SignUp() {
               autoComplete="email"
               autoFocus
             />
+            {!validFields.validEmail &&
+              <strong className="invalidEmailText">
+                Please enter a valid email
+              </strong>}
             <TextField
               value={formData.password}
               onChange={(e) => { handleChange(e) }}
@@ -111,6 +131,18 @@ export default function SignUp() {
               id="password"
               autoComplete="current-password"
             />
+            {!validFields.validPassword &&
+              <div className="invalidPasswordText">
+              <strong>
+                Password must contain the following:
+              </strong>
+              <ul>
+                <li>At least 8 characters </li>
+                <li>Must contain at least 1 uppercase letter,<br/> 1 lowercase letter, and 1 number</li>
+                <li>Can contain special characters, but not required</li>
+              </ul>
+              </div>
+              }
             {/* <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
@@ -120,31 +152,32 @@ export default function SignUp() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              disabled={!validInputs}
             >
               Sign Up
             </Button>
           </Box>
-            {/* <Grid container> */}
-            {/* <Grid item xs>
+          {/* <Grid container> */}
+          {/* <Grid item xs>
                 <Link href="#" variant="body2">
                   Forgot password?
                 </Link>
               </Grid> */}
-            {/* <Grid item> */}
-            <Link href="/login" variant="body2">
-              {"Already have an account? Login"}
-            </Link>
-            {/* </Grid>
+          {/* <Grid item> */}
+          <Link href="/login" variant="body2">
+            {"Already have an account? Login"}
+          </Link>
+          {/* </Grid>
             </Grid> */}
           <Button
-              onClick={navigate("/guest")}
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-            >
-              Continue as a guest
-            </Button>
+            onClick={() => navigate("/guest")}
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+          >
+            Continue as a guest
+          </Button>
         </Box>
         <Copyright sx={{ mt: 8, mb: 4 }} />
       </Container>
