@@ -50,11 +50,12 @@ router.post('/login', (req, res) => {
 
 // need to check email in request body against mockData and then if found, send back that user in authState
 router.post('/signup', (req, res) => {
-  const token = generateJWTToken(req.body.email);
+  const {firstName, lastName, email, password, verifyPass } = req.body;
+  const token = generateJWTToken(email);
   let tokenData = {
     token: token,
     expiresIn: 30,
-    authState: { id: 1, name: "Josh", email: "josh.waalkes21@gmail.com" }
+    authUserState: { id: 1, firstName, lastName, email }
   }
   res.status(201).send(tokenData);
 });
