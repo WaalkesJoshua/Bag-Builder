@@ -86,9 +86,52 @@ const addUser = async (user) => {
     console.log(`Error adding user ${JSON.stringify(user)}`, err);
     return err;
   }
-
-
 };
+
+const deleteUserById = async(id) => {
+//need to delete all bags from user as well
+  //need to delete all relations from each bag to each disc as well
+
+  const query = `
+    DELETE FROM bb_users
+    WHERE id = $1;`
+
+  try {
+    const results = await pool.query(query, [id]);
+    console.log('Deleted results', results);
+    return results;
+  } catch (err) {
+    console.log (`Error deleting user with id: ${id}`, err);
+    return err;
+  }
+}
+
+const updateUser = async (user) => {
+  const {id, firstName, lastName, experience, email, hashedPass} = user;
+
+  if (await checkUserEmailExists(email)) {
+    return('Email already exists');
+  }
+
+  const query = `
+    UPDATE bb_users
+    SET first_name = $1,
+    last_name = $2,
+    experience = $3,
+    email = $4,
+    hashed_pass = $5
+    WHERE id = $6;`
+
+  try {
+    const results = await pool.query(query, [firstName, lastName, experience, email, hashedPass, id]);
+    console.log('Updated user', results);
+    return results;
+  } catch (err) {
+    console.log(`Error updating user with id: ${id}`, err);
+    return err;
+  }
+
+}
 
 module.exports = {
   getAllUsers,
@@ -96,6 +139,7 @@ module.exports = {
   getUserByEmail,
   checkUserEmailExists,
   addUser,
-
+  deleteUserById,
+  updateUser
 };
 
