@@ -1,6 +1,6 @@
 const { pool } = require('../PG-connect');
 const { checkUserEmailExists } = require('../utils');
-const { addBag } = require('./bagController');
+const { addBag, deleteAllUsersBagsById } = require('./bagController');
 
 const userIdSeq = 'user_seq';
 
@@ -89,17 +89,21 @@ const addUser = async (user) => {
 };
 
 const deleteUserById = async(id) => {
-//need to delete all bags from user as well
-  //need to delete all relations from each bag to each disc as well
-
   const query = `
     DELETE FROM bb_users
     WHERE id = $1;`
 
   try {
+    await deleteAllUsersBagsById(id);
+  } catch (err) {
+    console.log('Error in user controller deleting user bags', err);
+    return err;
+  }
+
+
+  try {
     const results = await pool.query(query, [id]);
-    console.log('Deleted results', results);
-    return results;
+    return results.rowCount;
   } catch (err) {
     console.log (`Error deleting user with id: ${id}`, err);
     return err;
