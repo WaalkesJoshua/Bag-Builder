@@ -16,7 +16,6 @@ const getAllUsersBagsById = async (userId) => {
   GROUP BY bags.id;`
 
   try {
-    console.log('query hit');
     const result = await pool.query(query, [userId]);
     return result.rows;
   } catch (err) {
@@ -52,8 +51,7 @@ const deleteBagById = async (bagId) => {
   }
 
   try {
-    const result = await pool.query(query, [bagId]);
-    return result.rows;
+    await pool.query(query, [bagId]);
   } catch (err) {
     console.log('Error deleting bag with id: ', bagId, err);
     return err;
@@ -108,7 +106,7 @@ const updateBag = async (bag) => {
 
   try {
     const result = await pool.query(query, [name, description, userId, id]);
-    return result.rows;
+    return result;
   } catch (err) {
     console.log('Error updating bag with id: ', id, err);
     return err;
