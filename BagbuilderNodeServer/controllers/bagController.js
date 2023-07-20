@@ -3,6 +3,28 @@ const { deleteRelationsByListOfBagIds } = require('./bags_discsController');
 
 const bagIdSeq = 'bags_seq';
 
+const getAllUsersBagsById = async (userId) => {
+  const query = `
+  SELECT
+  bags.*, json_agg(discs.*) AS discs
+  FROM bags
+  LEFT JOIN
+  bags_discs ON bags.id = bags_discs.bags_id
+  LEFT JOIN
+  discs ON bags_discs.discs_id = discs.id
+  WHERE user_id = $1
+  GROUP BY bags.id;`
+
+  try {
+    console.log('query hit');
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  } catch (err) {
+    console.log('Error retrieving user bags with id: ', userId);
+    return err;
+  }
+};
+
 const addBag = async (name, description, userId) => {
   const query = `
     INSERT INTO bags (id, name, description, user_id)
@@ -11,8 +33,29 @@ const addBag = async (name, description, userId) => {
 
   try {
     const result = await pool.query(query, [name, description, userId]);
+    return result.rows;
   } catch (err) {
     console.log('Error adding bag', err);
+    return err;
+  }
+};
+
+const deleteBagById = async (bagId) => {
+  const query = `
+  DELETE FROM bags
+  where id = $1;`
+
+  try {
+    await deleteRelationsByListOfBagIds([bagId]);
+  } catch (err) {
+    console.log('Error deleting disc relations with bagId: ', bagId, err);
+  }
+
+  try {
+    const result = await pool.query(query, [bagId]);
+    return result.rows;
+  } catch (err) {
+    console.log('Error deleting bag with id: ', bagId, err);
     return err;
   }
 };
@@ -45,17 +88,40 @@ const deleteAllUsersBagsById = async (userId) => {
     return err;
   }
 
-  try{
+  try {
     const deleteResult = await pool.query(query, [userId]);
     return deleteResult.rows;
   } catch (err) {
     console.log('Error deleting bags with userId: ' + userId, err);
     return err;
   }
-}
+};
+
+const updateBag = async (bag) => {
+  const { id, name, description, userId } = bag;
+  const query = `
+  UPDATE bags
+  SET name = $1,
+  description = $2,
+  user_id = $3
+  WHERE id = $4;`
+
+  try {
+    const result = await pool.query(query, [name, description, userId, id]);
+    return result.rows;
+  } catch (err) {
+    console.log('Error updating bag with id: ', id, err);
+    return err;
+  }
+};
+
+
 
 module.exports = {
+  getAllUsersBagsById,
   addBag,
+  deleteBagById,
   deleteAllUsersBagsById,
+  updateBag,
 
 };

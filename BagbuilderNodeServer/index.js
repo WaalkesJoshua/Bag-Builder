@@ -8,7 +8,6 @@ const discRoute = require('./routes/discRoute.js');
 const authRoute = require('./routes/authRoute');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
-const mockData = require('./mockData');
 
 const port = process.env.REACT_APP_NODE_PORT;
 
@@ -20,7 +19,6 @@ app.use('/bags', bagRoute);
 app.use('/discs', discRoute);
 app.use('/auth', authRoute)
 
-const mockUserData = mockData();
 
 
 app.listen(port, () => {

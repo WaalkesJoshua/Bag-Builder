@@ -1,5 +1,4 @@
 const { pool } = require('../PG-connect');
-const { checkUserEmailExists } = require('../utils');
 const { addBag, deleteAllUsersBagsById } = require('./bagController');
 
 const userIdSeq = 'user_seq';
@@ -57,7 +56,20 @@ const getUserByEmail = async (email) => {
     console.log('Error retrieving users', err);
     return err;
   }
+};
 
+const checkUserEmailExists = async (email) => {
+  const query = `
+    SELECT COUNT(*)
+    FROM bb_users
+    WHERE email = $1;`
+
+  const result = await pool.query(query, [email]);
+  if (parseInt(result.rows[0].count) === 0) {
+    return false;
+  }
+
+  return true;
 };
 
 
@@ -67,10 +79,10 @@ const addUser = async (user) => {
   const bagDescription = "This is your first bag, let's add some discs!";
 
   if (await checkUserEmailExists(email)) {
-    return('Email already exists');
+    return ('Email already exists');
   }
 
-    const query = `
+  const query = `
     INSERT INTO bb_users (id, first_name, last_name, email, experience, hashed_pass)
     VALUES (nextval('user_seq'),$1, $2, $3, $4, $5)
     RETURNING id;
@@ -88,7 +100,7 @@ const addUser = async (user) => {
   }
 };
 
-const deleteUserById = async(id) => {
+const deleteUserById = async (id) => {
   const query = `
     DELETE FROM bb_users
     WHERE id = $1;`
@@ -105,16 +117,16 @@ const deleteUserById = async(id) => {
     const results = await pool.query(query, [id]);
     return results.rowCount;
   } catch (err) {
-    console.log (`Error deleting user with id: ${id}`, err);
+    console.log(`Error deleting user with id: ${id}`, err);
     return err;
   }
 }
 
 const updateUser = async (user) => {
-  const {id, firstName, lastName, experience, email, hashedPass} = user;
+  const { id, firstName, lastName, experience, email, hashedPass } = user;
 
   if (await checkUserEmailExists(email)) {
-    return('Email already exists');
+    return ('Email already exists');
   }
 
   const query = `
