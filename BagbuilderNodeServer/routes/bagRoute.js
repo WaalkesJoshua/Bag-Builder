@@ -4,7 +4,9 @@ const {
   getAllUsersBagsById,
   addBag,
   deleteBagById,
-  updateBag } = require('../controllers/bagController');
+  updateBag,
+  addDiscToBagByIds,
+  removeDiscFromBagByIds } = require('../controllers/bagController');
 
 
 
@@ -38,12 +40,32 @@ router.post("/add", async (req, res) => {
   }
 });
 
-router.post("/:id/addDisc/:discId", async (req, res) => {
+router.post("/:bagId/addDisc/:discId", async (req, res) => {
+  //fire bird is id: 4
+  //valkyrie is id: 7
+  //buzz is id: 38
+  const {bagId, discId} = req.params;
 
+  try {
+    await addDiscToBagByIds(bagId, discId);
+    res.sendStatus(201);
+  }  catch (err) {
+    console.log('Error adding disc in bag route', err);
+    res.send(err);
+  }
 });
 
-router.post("/:id/removeDisc/:discId", async (req, res) => {
+router.post("/:bagId/removeDisc/:discId", async (req, res) => {
+  const {bagId, discId} = req.params;
 
+  try {
+    const result = await removeDiscFromBagByIds(bagId, discId);
+    console.log(result);
+    res.sendStatus(201);
+  }  catch (err) {
+    console.log('Error adding disc in bag route', err);
+    res.send(err);
+  }
 });
 
 router.delete("/delete/:bagId", async (req, res) => {
@@ -56,7 +78,6 @@ router.delete("/delete/:bagId", async (req, res) => {
     console.log('Error deleting bag with id: ', bagId, err);
     res.send(err);
   }
-
 });
 
 router.put("/update", async (req, res) => {

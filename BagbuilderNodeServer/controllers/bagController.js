@@ -113,6 +113,39 @@ const updateBag = async (bag) => {
   }
 };
 
+const addDiscToBagByIds = async (bagId, discId) => {
+  const query = `
+    INSERT INTO bags_discs (bags_id, discs_id)
+    SELECT $1, $2
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM bags_discs
+      WHERE bags_id = $1 AND  discs_id = $2
+    );`
+
+  try {
+    const result = await pool.query(query, [bagId, discId]);
+    return result;
+  } catch (err) {
+    console.log('Error adding disc to bag', err);
+    return err;
+  }
+};
+
+const removeDiscFromBagByIds = async (bagId, discId) => {
+  const query = `
+    DELETE FROM bags_discs
+    WHERE bags_id = $1 AND discs_id = $2;`
+
+  try {
+    const result = await pool.query(query, [bagId, discId]);
+    return result;
+  } catch (err) {
+    console.log('Error removing disc from bag', err);
+    return err;
+  }
+};
+
 
 
 module.exports = {
@@ -121,5 +154,7 @@ module.exports = {
   deleteBagById,
   deleteAllUsersBagsById,
   updateBag,
+  addDiscToBagByIds,
+  removeDiscFromBagByIds,
 
 };
