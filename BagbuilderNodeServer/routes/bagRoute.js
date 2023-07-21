@@ -28,8 +28,9 @@ router.get("/userId/:userId", async (req, res) => {
 // });
 
 
-router.post("/add", async (req, res) => {
-  const { name, description, userId } = req.body;
+router.post("/add/:userId", async (req, res) => {
+  const { name, description} = req.body;
+  const userId = req.params.userId;
 
   try {
     const newBag = await addBag(name, description, userId);
@@ -47,8 +48,8 @@ router.post("/:bagId/addDisc/:discId", async (req, res) => {
   const {bagId, discId} = req.params;
 
   try {
-    await addDiscToBagByIds(bagId, discId);
-    res.sendStatus(201);
+    const result = await addDiscToBagByIds(bagId, discId);
+    res.send(result);
   }  catch (err) {
     console.log('Error adding disc in bag route', err);
     res.send(err);
@@ -60,8 +61,7 @@ router.post("/:bagId/removeDisc/:discId", async (req, res) => {
 
   try {
     const result = await removeDiscFromBagByIds(bagId, discId);
-    console.log(result);
-    res.sendStatus(201);
+    res.send(result);
   }  catch (err) {
     console.log('Error adding disc in bag route', err);
     res.send(err);

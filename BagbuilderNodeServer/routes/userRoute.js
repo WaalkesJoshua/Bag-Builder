@@ -45,7 +45,7 @@ router.delete("/delete/:id", async (req, res) => {
   try {
    const result = await deleteUserById(id);
    if (result === 1) {
-     res.send('User successfully deleted');
+     res.send(`User with Id: ${id} successfully deleted`);
    }
   } catch (err) {
     res.status(400).send(err);
@@ -54,10 +54,10 @@ router.delete("/delete/:id", async (req, res) => {
 
 router.put("/update", async (req, res) => {
   const user = req.body;
-  console.log('User', user);
+
   try {
-    const result = await updateUser(user);
-    res.send(result);
+    await updateUser(user);
+    res.sendStatus(200);
   } catch (err) {
     res.status(400).send(err);
   }

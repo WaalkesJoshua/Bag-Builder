@@ -6,7 +6,11 @@ const bagIdSeq = 'bags_seq';
 const getAllUsersBagsById = async (userId) => {
   const query = `
   SELECT
-  bags.*, json_agg(discs.*) AS discs
+  bags.*,
+  COALESCE(
+    json_agg(discs.*) FILTER (WHERE discs.id IS NOT NULL),
+    '[]'
+  ) AS discs
   FROM bags
   LEFT JOIN
   bags_discs ON bags.id = bags_discs.bags_id
@@ -20,6 +24,31 @@ const getAllUsersBagsById = async (userId) => {
     return result.rows;
   } catch (err) {
     console.log('Error retrieving user bags with id: ', userId);
+    return err;
+  }
+};
+
+const getBagById = async (bagId) => {
+  const query = `
+  SELECT
+  bags.*,
+  COALESCE(
+    json_agg(discs.*) FILTER (WHERE discs.id IS NOT NULL),
+    '[]'
+  ) AS discs
+  FROM bags
+  LEFT JOIN
+  bags_discs ON bags.id = bags_discs.bags_id
+  LEFT JOIN
+  discs ON bags_discs.discs_id = discs.id
+  WHERE bags.id = $1
+  GROUP BY bags.id;`
+
+  try {
+    const result = await pool.query(query, [bagId]);
+    return result.rows;
+  } catch (err) {
+    console.log('Error retrieving  bag with id: ', bagId);
     return err;
   }
 };
@@ -96,16 +125,16 @@ const deleteAllUsersBagsById = async (userId) => {
 };
 
 const updateBag = async (bag) => {
-  const { id, name, description, userId } = bag;
+  const { id, name, description } = bag;
   const query = `
   UPDATE bags
   SET name = $1,
-  description = $2,
-  user_id = $3
-  WHERE id = $4;`
+  description = $2
+  WHERE id = $3;`
 
   try {
-    const result = await pool.query(query, [name, description, userId, id]);
+    await pool.query(query, [name, description, id]);
+    const result = await getBagById(id);
     return result;
   } catch (err) {
     console.log('Error updating bag with id: ', id, err);
@@ -124,7 +153,8 @@ const addDiscToBagByIds = async (bagId, discId) => {
     );`
 
   try {
-    const result = await pool.query(query, [bagId, discId]);
+    await pool.query(query, [bagId, discId]);
+    const result = await getBagById(bagId);
     return result;
   } catch (err) {
     console.log('Error adding disc to bag', err);
@@ -138,7 +168,8 @@ const removeDiscFromBagByIds = async (bagId, discId) => {
     WHERE bags_id = $1 AND discs_id = $2;`
 
   try {
-    const result = await pool.query(query, [bagId, discId]);
+    await pool.query(query, [bagId, discId]);
+    const result = getBagById(bagId);
     return result;
   } catch (err) {
     console.log('Error removing disc from bag', err);

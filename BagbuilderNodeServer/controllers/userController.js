@@ -6,15 +6,42 @@ const userIdSeq = 'user_seq';
 
 
 const getAllUsers = async () => {
+  // const query = `
+  //   SELECT bb_users.*, json_agg(bags.*) AS bags
+  //   FROM bb_users
+  //   LEFT JOIN bags ON bb_users.id = bags.user_id
+  //   GROUP BY bb_users.id
+  //   ORDER BY bb_users.id;`
+
   const query = `
-    SELECT bb_users.*, json_agg(bags.*) AS bags
-    FROM bb_users
-    LEFT JOIN bags ON bb_users.id = bags.user_id
-    GROUP BY bb_users.id
-    ORDER BY bb_users.id;`
+  SELECT
+    bb_users.*,
+    (
+        SELECT JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', bags.id,
+                'name', bags.name,
+                'description', bags.description,
+                'discs', COALESCE(
+                    (
+                        SELECT JSON_AGG(discs.*)
+                        FROM bags_discs
+                        INNER JOIN discs ON bags_discs.discs_id = discs.id
+                        WHERE bags_discs.bags_id = bags.id
+                    ),
+                    '[]'::JSON
+                )
+            )
+        )
+        FROM bags
+        WHERE bags.user_id = bb_users.id
+    ) AS bags
+FROM bb_users
+ORDER BY bb_users.id;`
 
   try {
     const result = await pool.query(query);
+    //future upgrade: map over result and change id to number
     return result.rows;
   } catch (err) {
     console.log('Error retrieving users', err);
@@ -24,15 +51,35 @@ const getAllUsers = async () => {
 
 const getUserById = async (id) => {
   const query = `
-    SELECT bb_users.*, json_agg(bags.*) AS bags
-    FROM bb_users
-    LEFT JOIN bags ON bb_users.id = bags.user_id
-    WHERE bb_users.id = $1
-    GROUP BY bb_users.id
-    ORDER BY bb_users.id;`
+  SELECT
+    bb_users.*,
+    (
+        SELECT JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', bags.id,
+                'name', bags.name,
+                'description', bags.description,
+                'discs', COALESCE(
+                    (
+                        SELECT JSON_AGG(discs.*)
+                        FROM bags_discs
+                        INNER JOIN discs ON bags_discs.discs_id = discs.id
+                        WHERE bags_discs.bags_id = bags.id
+                    ),
+                    '[]'::JSON
+                )
+            )
+        )
+        FROM bags
+        WHERE bags.user_id = bb_users.id
+    ) AS bags
+FROM bb_users
+WHERE id = $1
+ORDER BY bb_users.id;`
 
   try {
     const result = await pool.query(query, [id]);
+    //future upgrade: map over result and change id to number
     return result.rows;
   } catch (err) {
     console.log('Error retrieving users', err);
@@ -123,6 +170,7 @@ const deleteUserById = async (id) => {
 }
 
 const updateUser = async (user) => {
+
   const { id, firstName, lastName, experience, email, hashedPass } = user;
 
   if (await checkUserEmailExists(email)) {
@@ -139,15 +187,13 @@ const updateUser = async (user) => {
     WHERE id = $6;`
 
   try {
-    const results = await pool.query(query, [firstName, lastName, experience, email, hashedPass, id]);
-    console.log('Updated user', results);
-    return results;
+    await pool.query(query, [firstName, lastName, experience, email, hashedPass, id]);
   } catch (err) {
     console.log(`Error updating user with id: ${id}`, err);
     return err;
   }
+};
 
-}
 
 module.exports = {
   getAllUsers,
