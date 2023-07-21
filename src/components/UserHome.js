@@ -1,15 +1,23 @@
-import { useIsAuthenticated } from 'react-auth-kit'
+// import { useIsAuthenticated } from 'react-auth-kit'
 import { useEffect } from 'react';
+import { fetchUsers } from '../slicers/userSlice';
+import { useDispatch, useSelector } from "react-redux";
+
 
 
 
 
 export default function UserHome() {
-  const isAuth = useIsAuthenticated();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.users.currentUser);
+
+  useEffect(() => {
+    fetchUsers(dispatch);
+  }, [dispatch]);
 
   return (
     <>
-      <h6>UserHome</h6>
+    <div>{user.firstName}</div>
     </>
   )
 }

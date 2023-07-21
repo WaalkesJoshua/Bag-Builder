@@ -15,6 +15,9 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useSignIn } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setCurrentUser } from '../slicers/userSlice';
+import { emailValidator, passwordValidator } from '../util/validators';
 
 
 function Copyright(props) {
@@ -35,9 +38,12 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function Login() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const signIn = useSignIn();
   const [formData, setFormData] = React.useState({ email: '', password: '' });
+  const [validInputs, setValidInputs] = React.useState(false);
+  const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
   const BASE_URL = process.env.REACT_APP_DEV_URL;
   const PORT = process.env.REACT_APP_NODE_PORT;
 
@@ -45,25 +51,41 @@ export default function Login() {
   const handleSubmit = async (event) => {
     // console.log({formData});
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}${PORT}/login`,formData);
+    const response = await axios.post(`${BASE_URL}${PORT}/auth/login`, formData);
     if (response.status === 201) {
       console.log(response.data);
-      if(signIn(
+      if (signIn(
         {
           tokentoken: response.data.token,
-          expiresIn:response.data.expiresIn,
+          expiresIn: response.data.expiresIn,
           tokenType: "Bearer",
           authState: response.data.authUserState
         }
       )) {
-            navigate('/user');
+        const user = response.data.authUserState;
+        console.log(user);
+        dispatch(setCurrentUser({user}));
+        navigate('/user');
       }
     }
   };
 
   const handleChange = (event) => {
-    setFormData({ ...formData, [event.target.name]: event.target.value })
-  }
+    const {name, value} = event.target;
+    if (name === 'email') {
+      setValidFields({...validFields, validEmail: emailValidator(value)})
+    }
+    if (name === 'password') {
+      setValidFields({...validFields, validPassword: passwordValidator(value)})
+    }
+    setFormData({ ...formData, [name]: value })
+    const {email, password} = formData;
+    if(emailValidator(email) && passwordValidator(password)) {
+      setValidInputs(true);
+    } else {
+      setValidInputs(false);
+    }
+  };
 
   return (
     <ThemeProvider theme={defaultTheme}>
@@ -83,7 +105,7 @@ export default function Login() {
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <Box component="form" onSubmit={handleSubmit}  sx={{ mt: 1 }}>
             <TextField
               value={formData.email}
               onChange={(e) => { handleChange(e) }}
@@ -96,6 +118,10 @@ export default function Login() {
               autoComplete="email"
               autoFocus
             />
+            {!validFields.validEmail &&
+              <strong className="invalidEmailText">
+                Please enter a valid email
+              </strong>}
             <TextField
               value={formData.password}
               onChange={(e) => { handleChange(e) }}
@@ -108,6 +134,18 @@ export default function Login() {
               id="password"
               autoComplete="current-password"
             />
+            {!validFields.validPassword &&
+              <div className="invalidPasswordText">
+              <strong>
+                Password must contain the following:
+              </strong>
+              <ul>
+                <li>At least 8 characters </li>
+                <li>Must contain at least 1 uppercase letter,<br/> 1 lowercase letter, and 1 number</li>
+                <li>Can contain special characters, but not required</li>
+              </ul>
+              </div>
+              }
             {/* <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
@@ -117,21 +155,22 @@ export default function Login() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              disabled={!validInputs}
             >
               Sign In
             </Button>
           </Box>
-            {/* <Grid container>
+          {/* <Grid container>
               {/* <Grid item xs>
                 <Link href="#" variant="body2">
                   Forgot password?
                 </Link>
               </Grid>
               <Grid item> */}
-                <Link href="/signup" variant="body2">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              {/* </Grid>
+          <Link href="/signup" variant="body2">
+            {"Don't have an account? Sign Up"}
+          </Link>
+          {/* </Grid>
             </Grid> */}
         </Box>
         <Copyright sx={{ mt: 8, mb: 4 }} />
