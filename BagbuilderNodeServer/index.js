@@ -8,12 +8,14 @@ const discRoute = require('./routes/discRoute.js');
 const authRoute = require('./routes/authRoute');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const { validateReqAuth } = require('./security/authMiddleware');
 
 const port = process.env.REACT_APP_NODE_PORT;
 
 app.use(cors());
 app.use(bodyParser.json());
-morgan('dev');
+app.use(validateReqAuth);
+
 app.use('/users', userRoute);
 app.use('/bags', bagRoute);
 app.use('/discs', discRoute);
