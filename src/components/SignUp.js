@@ -13,7 +13,6 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
-import { useSignIn } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
 import { emailValidator, passwordValidator } from '../util/validators';
 import Stack from '@mui/material/Stack';
@@ -42,7 +41,6 @@ const defaultTheme = createTheme();
 export default function SignUp() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const signIn = useSignIn();
   const [formData, setFormData] = React.useState({ firstName: '', lastName: '', email: '', password: '', verifyPass: '' });
   const [validInputs, setValidInputs] = React.useState(false);
   const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
@@ -56,19 +54,10 @@ export default function SignUp() {
     const response = await axios.post(`${BASE_URL}${PORT}/auth/signup`, formData);
     if (response.status === 201) {
       console.log(response.data);
-      if (signIn(
-        {
-          tokentoken: response.data.token,
-          expiresIn: response.data.expiresIn,
-          tokenType: "Bearer",
-          authState: response.data.authUserState
-        }
-      )) {
         const user = response.data.authUserState;
         console.log(user);
         dispatch(setCurrentUser({user}));
         navigate('/user');
-      }
     }
   };
 

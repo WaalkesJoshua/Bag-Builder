@@ -10,18 +10,12 @@ import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import GuestHome from "./components/GuestHome";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider, RequireAuth } from "react-auth-kit";
 
 
 function App() {
 
   return (
     <>
-      <AuthProvider
-        authType={"cookie"}
-        authName={"_auth"}
-        cookieDomain={window.location.hostname}
-        cookieSecure={window.location.protocol === "https:"}>
         <BrowserRouter>
           <Navbar />
           <Routes>
@@ -29,14 +23,9 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/guest" element={<GuestHome />} />
-            <Route path="/user" element={
-              <RequireAuth loginPath={"/login"}>
-                <UserHome />
-              </RequireAuth>
-              } />
+            <Route path="/user" element={<UserHome/>} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
     </>
   )
 }

@@ -1,11 +1,9 @@
-import { useIsAuthenticated } from 'react-auth-kit'
 import { useEffect } from 'react';
 
 
 
 
 export default function GuestHome() {
-  const isAuth = useIsAuthenticated();
 
   return (
     <>

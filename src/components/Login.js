@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCurrentUser } from '../slicers/userSlice';
 import { emailValidator, passwordValidator } from '../util/validators';
+import bcrypt from "bcryptjs";
 
 
 function Copyright(props) {
@@ -32,10 +33,11 @@ function Copyright(props) {
   );
 }
 
-// TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function Login() {
+  // const genSalt = bcrypt.genSaltSync(10);
+  // console.log(genSalt, bcrypt.hashSync("Password1", genSalt));
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [formData, setFormData] = React.useState({ email: '', password: '' });
@@ -47,15 +49,28 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    const {email, password} = formData;
     const headers = {"Authorization": API_KEY}
-    const response = await axios.get(`${BASE_URL}${PORT}/users/login/${formData.email}`, {headers});
-    if (response.status === 200) {
-      console.log(response.data);
-        //validation logic... does hashed pass === hashed pass??
-        // const user = response.data
-        // dispatch(setCurrentUser({user}));
-        // navigate('/user');
+
+    try {
+      const response = await axios.get(`${BASE_URL}${PORT}/users/login/${email}`, {headers});
+      if (response.status === 200
+          && response.data) {
+        const user = response.data
+        const hashedPass = user.hashed_pass;
+        const salt = user.salt;
+        const hashedInputPass = bcrypt.hashSync(password, salt);
+        if(hashedInputPass === hashedPass) {
+          dispatch(setCurrentUser({user}));
+          navigate('/user');
+        } else {
+          alert("Invalid Email or Password");
+        }
+      } else {
+        alert(`No user found for ${email}`);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
