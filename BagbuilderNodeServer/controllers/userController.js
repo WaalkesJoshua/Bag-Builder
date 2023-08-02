@@ -74,13 +74,12 @@ const getUserById = async (id) => {
         WHERE bags.user_id = bb_users.id
     ) AS bags
 FROM bb_users
-WHERE id = $1
-ORDER BY bb_users.id;`
+WHERE id = $1;`
 
   try {
     const result = await pool.query(query, [id]);
     //future upgrade: map over result and change id to number
-    return result.rows;
+    return result.rows[0];
   } catch (err) {
     console.log('Error retrieving users', err);
     return err;
@@ -89,18 +88,36 @@ ORDER BY bb_users.id;`
 
 const getUserByEmail = async (email) => {
   const query = `
-  SELECT bb_users.*, json_agg(bags.*) AS bags
-  FROM bb_users
-  LEFT JOIN bags ON bb_users.id = bags.user_id
-  WHERE bb_users.email = $1
-  GROUP BY bb_users.id
-  ORDER BY bb_users.id;`
+  SELECT
+    bb_users.*,
+    (
+        SELECT JSON_AGG(
+            JSON_BUILD_OBJECT(
+                'id', bags.id,
+                'name', bags.name,
+                'description', bags.description,
+                'discs', COALESCE(
+                    (
+                        SELECT JSON_AGG(discs.*)
+                        FROM bags_discs
+                        INNER JOIN discs ON bags_discs.discs_id = discs.id
+                        WHERE bags_discs.bags_id = bags.id
+                    ),
+                    '[]'::JSON
+                )
+            )
+        )
+        FROM bags
+        WHERE bags.user_id = bb_users.id
+    ) AS bags
+FROM bb_users
+WHERE email = $1;`
 
   try {
     const result = await pool.query(query, [email]);
-    return result.rows;
+    return result.rows[0];
   } catch (err) {
-    console.log('Error retrieving users', err);
+    console.log('Error retrieving user with email: ' + email, err);
     return err;
   }
 };
@@ -115,7 +132,6 @@ const checkUserEmailExists = async (email) => {
   if (parseInt(result.rows[0].count) === 0) {
     return false;
   }
-
   return true;
 };
 
@@ -139,7 +155,7 @@ const addUser = async (user) => {
     user.id = result.rows[0].id;
     await addBag(bagName, bagDescription, user.id);
     const savedUser = await getUserById(user.id);
-    return "Succesfully added: " + JSON.stringify(savedUser);
+    return savedUser;
 
   } catch (err) {
     console.log(`Error adding user ${JSON.stringify(user)}`, err);

@@ -63,6 +63,18 @@ router.put("/update", async (req, res) => {
   }
 });
 
+router.get("/login/:email", async (req, res) => {
+  const userEmail = req.params.email;
+  try {
+    const oneUser = await getUserByEmail(userEmail);
+    res.send(oneUser);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+
+
 
 
 module.exports = router;
