@@ -13,7 +13,6 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
-import { useSignIn } from 'react-auth-kit';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCurrentUser } from '../slicers/userSlice';
@@ -25,7 +24,7 @@ function Copyright(props) {
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
       {'Copyright © '}
       <Link color="inherit" href={`${process.env.REACT_APP_DEV_URL}${process.env.REACT_APP_CLIENT_PORT}`}>
-        BabBuilder
+        BagBuilder
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -34,57 +33,41 @@ function Copyright(props) {
 }
 
 // TODO remove, this demo shouldn't need to reset the theme.
-
 const defaultTheme = createTheme();
 
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const signIn = useSignIn();
   const [formData, setFormData] = React.useState({ email: '', password: '' });
-  const [validInputs, setValidInputs] = React.useState(false);
   const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
   const BASE_URL = process.env.REACT_APP_DEV_URL;
   const PORT = process.env.REACT_APP_NODE_PORT;
+  const API_KEY = process.env.REACT_APP_API_KEY;
 
 
   const handleSubmit = async (event) => {
-    // console.log({formData});
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}${PORT}/auth/login`, formData);
-    if (response.status === 201) {
+
+    const headers = {"Authorization": API_KEY}
+    const response = await axios.get(`${BASE_URL}${PORT}/users/login/${formData.email}`, {headers});
+    if (response.status === 200) {
       console.log(response.data);
-      if (signIn(
-        {
-          tokentoken: response.data.token,
-          expiresIn: response.data.expiresIn,
-          tokenType: "Bearer",
-          authState: response.data.authUserState
-        }
-      )) {
-        const user = response.data.authUserState;
-        console.log(user);
-        dispatch(setCurrentUser({user}));
-        navigate('/user');
-      }
+        //validation logic... does hashed pass === hashed pass??
+        // const user = response.data
+        // dispatch(setCurrentUser({user}));
+        // navigate('/user');
     }
   };
 
   const handleChange = (event) => {
     const {name, value} = event.target;
     if (name === 'email') {
-      setValidFields({...validFields, validEmail: emailValidator(value)})
+       setValidFields({...validFields, validEmail: emailValidator(value)})
     }
     if (name === 'password') {
-      setValidFields({...validFields, validPassword: passwordValidator(value)})
+       setValidFields({...validFields, validPassword: passwordValidator(value)})
     }
     setFormData({ ...formData, [name]: value })
-    const {email, password} = formData;
-    if(emailValidator(email) && passwordValidator(password)) {
-      setValidInputs(true);
-    } else {
-      setValidInputs(false);
-    }
   };
 
   return (
@@ -155,7 +138,7 @@ export default function Login() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={!validInputs}
+              disabled={!(emailValidator(formData.email) && passwordValidator(formData.password))}
             >
               Sign In
             </Button>
