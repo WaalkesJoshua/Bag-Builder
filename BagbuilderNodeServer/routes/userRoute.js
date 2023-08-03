@@ -36,7 +36,7 @@ router.post("/add", async (req, res) => {
     const addedUser = await addUser(user);
     res.send(addedUser);
   } catch (err) {
-    res.status(400).send(err);
+    res.status(400).send(err.message);
   }
 });
 

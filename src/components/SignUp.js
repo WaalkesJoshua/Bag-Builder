@@ -1,23 +1,26 @@
-import React, {useEffect} from 'react';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
+import React from 'react';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
+import {
+  Avatar,
+  Button,
+  CssBaseline,
+  TextField,
+  Link,
+  Box,
+  Typography,
+  Container,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { emailValidator, passwordValidator } from '../util/validators';
-import Stack from '@mui/material/Stack';
 import { useDispatch } from 'react-redux';
-import {setCurrentUser} from '../slicers/userSlice'
+import { setCurrentUser } from '../slicers/userSlice'
+import { cheezyLoadBalancer } from '../util/cheezyLoadBalancer';
+import bcrypt from "bcryptjs";
+
 
 
 
@@ -41,40 +44,40 @@ const defaultTheme = createTheme();
 export default function SignUp() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [formData, setFormData] = React.useState({ firstName: '', lastName: '', email: '', password: '', verifyPass: '' });
-  const [validInputs, setValidInputs] = React.useState(false);
+  const [formData, setFormData] = React.useState({ firstName: '', lastName: '', email: '', password: '',
+    verifyPass: '', experience: 'Beginner' });
   const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
   const BASE_URL = process.env.REACT_APP_DEV_URL;
-  const PORT = process.env.REACT_APP_NODE_PORT;
+  const PORT = cheezyLoadBalancer();
+  const API_KEY = process.env.REACT_APP_API_KEY;
 
 
   const handleSubmit = async (event) => {
-    // console.log({formData});
     event.preventDefault();
-    const response = await axios.post(`${BASE_URL}${PORT}/auth/signup`, formData);
-    if (response.status === 201) {
-      console.log(response.data);
-        const user = response.data.authUserState;
-        console.log(user);
-        dispatch(setCurrentUser({user}));
+    const { firstName, lastName, email, password, experience } = formData;
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPass = bcrypt.hashSync(password, salt);
+    const user = { firstName, lastName, email, hashedPass, salt, experience };
+    try {
+      const headers = { "Authorization": API_KEY }
+      const response = await axios.post(`${BASE_URL}${PORT}/users/add`, user, { headers });
+      if (response.status === 201) {
+        const currentUser = response.data;
+        console.log(currentUser);
+        dispatch(setCurrentUser({ currentUser }));
         navigate('/user');
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  useEffect (() => {
-    if (formValidation()) {
-      setValidInputs(true);
-    } else {
-      setValidInputs(false);
-    }
-  },[formData])
-
   const formValidation = () => {
-    const { firstName, lastName, email, password, verifyPass } = formData;
-    let isValid = ( emailValidator(email) && passwordValidator(password)
+    const { firstName, lastName, email, password, verifyPass, experience } = formData;
+    let isValid = (emailValidator(email) && passwordValidator(password)
       && firstName.length > 0 && lastName.length > 0
-      && password === verifyPass );
-      return isValid;
+      && experience.length > 0 && password === verifyPass);
+    return isValid;
   }
 
   const handleChange = (event) => {
@@ -142,7 +145,7 @@ export default function SignUp() {
             <TextField
               value={formData.email}
               onChange={(e) => { handleChange(e) }}
-              margin="normal"
+              // margin="normal"
               required
               fullWidth
               id="email"
@@ -159,24 +162,25 @@ export default function SignUp() {
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
+                mt: 1,
+                mb: 1
               }}
             >
-                <TextField
-                  value={formData.password}
-                  onChange={(e) => { handleChange(e) }}
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="password"
-                  label="Password"
-                  name="password"
-                  type="password"
-                  autoComplete="password"
-                />
+              <TextField
+                value={formData.password}
+                onChange={(e) => { handleChange(e) }}
+                required
+                fullWidth
+                id="password"
+                label="Password"
+                name="password"
+                type="password"
+                autoComplete="password"
+              />
               <TextField
                 value={formData.verifyPass}
                 onChange={(e) => { handleChange(e) }}
-                margin="normal"
+                // margin="normal"
                 required
                 fullWidth
                 name="verifyPass"
@@ -185,24 +189,35 @@ export default function SignUp() {
                 id="verifyPass"
                 autoComplete="password"
                 sx={{ ml: .5 }}
-                />
+              />
             </Box>
-                {!validFields.validPassword &&
-                  <div className="invalidPasswordText">
-                    <strong>
-                      Password must contain the following:
-                    </strong>
-                    <ul>
-                      <li>At least 8 characters </li>
-                      <li>Must contain at least 1 uppercase letter,<br /> 1 lowercase letter, and 1 number</li>
-                    </ul>
-                  </div>
-                }
-                {formData.password !== formData.verifyPass &&
-                <strong className="noPassMatch">
-                  Passwords must match!
+            {!validFields.validPassword &&
+              <div className="invalidPasswordText">
+                <strong>
+                  Password must contain the following:
                 </strong>
-                }
+                <ul>
+                  <li>At least 8 characters </li>
+                  <li>Must contain at least 1 uppercase letter,<br /> 1 lowercase letter, and 1 number</li>
+                </ul>
+              </div>
+            }
+            {formData.password !== formData.verifyPass &&
+              <strong className="noPassMatch">
+                Passwords must match!
+              </strong>
+            }
+            <Select
+              value={formData.experience}
+              name="experience"
+              id="experience"
+              onChange={(e) => { handleChange(e) }}
+              fullWidth
+              >
+              <MenuItem value={"Beginner"}>Beginner</MenuItem>
+              <MenuItem value={"Intermediate"}>Intermediate</MenuItem>
+              <MenuItem value={"Advanced"}>Advanced</MenuItem>
+            </Select>
           </Box>
           <Button
             onClick={handleSubmit}
@@ -210,7 +225,7 @@ export default function SignUp() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={!validInputs}
+            disabled={!formValidation()}
           >
             Sign Up
           </Button>
@@ -239,5 +254,5 @@ export default function SignUp() {
         <Copyright sx={{ mt: 8, mb: 4 }} />
       </Container>
     </ThemeProvider>
-  );
+  )
 }

@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { setCurrentUser } from '../slicers/userSlice';
 import { emailValidator, passwordValidator } from '../util/validators';
 import bcrypt from "bcryptjs";
+import { cheezyLoadBalancer } from '../util/cheezyLoadBalancer';
 
 
 function Copyright(props) {
@@ -43,7 +44,7 @@ export default function Login() {
   const [formData, setFormData] = React.useState({ email: '', password: '' });
   const [validFields, setValidFields] = React.useState({ validEmail: true, validPassword: true })
   const BASE_URL = process.env.REACT_APP_DEV_URL;
-  const PORT = process.env.REACT_APP_NODE_PORT;
+  const PORT = cheezyLoadBalancer();
   const API_KEY = process.env.REACT_APP_API_KEY;
 
 

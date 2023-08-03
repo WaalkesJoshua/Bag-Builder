@@ -137,21 +137,21 @@ const checkUserEmailExists = async (email) => {
 
 
 const addUser = async (user) => {
-  const { firstName, lastName, email, experience, hashedPass } = user;
+  const { firstName, lastName, email, experience, hashedPass, salt } = user;
+  if (await checkUserEmailExists(email)) {
+    throw new Error('Email already exists');
+  }
   const bagName = "My First Bag";
   const bagDescription = "This is your first bag, let's add some discs!";
 
-  if (await checkUserEmailExists(email)) {
-    return ('Email already exists');
-  }
 
   const query = `
-    INSERT INTO bb_users (id, first_name, last_name, email, experience, hashed_pass)
-    VALUES (nextval('user_seq'),$1, $2, $3, $4, $5)
+    INSERT INTO bb_users (id, first_name, last_name, email, experience, hashed_pass, salt)
+    VALUES (nextval('user_seq'),$1, $2, $3, $4, $5, $6)
     RETURNING id;
     `
   try {
-    const result = await pool.query(query, [firstName, lastName, email, experience, hashedPass]);
+    const result = await pool.query(query, [firstName, lastName, email, experience, hashedPass, salt]);
     user.id = result.rows[0].id;
     await addBag(bagName, bagDescription, user.id);
     const savedUser = await getUserById(user.id);
@@ -159,7 +159,7 @@ const addUser = async (user) => {
 
   } catch (err) {
     console.log(`Error adding user ${JSON.stringify(user)}`, err);
-    return err;
+    throw new Error(`Error adding user ${JSON.stringify(user)} : ${err}`);
   }
 };
 
